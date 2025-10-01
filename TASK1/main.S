@@ -1,4 +1,4 @@
-@
+@ KOLLA OM DET FUNKAR NASSEBALLE
 @ Assembler program print out "Hello World"
 @ using the Pico SDK.
 @
