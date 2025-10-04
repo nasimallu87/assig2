@@ -5,26 +5,25 @@
 	.global main
 	.thumb_func
 
-	/* Externa C-funktioner (SDK + dina wrappers) */
+@functions
 	.extern gpio_init
-	.extern sleep_ms
-	.extern link_gpio_set_dir
-	.extern link_gpio_put
+	.extern sleep_ms 
+	.extern link_gpio_set_dir @set pin direction
+	.extern link_gpio_put  @ write value to pin
 
-	.equ GPIO_OUT, 1          @ output
+	.equ GPIO_OUT, 1          @ output = 1
 
 	.text
 main:
-    /* Initiera GP0..GP6 som OUTPUT enligt L4/L6 */
-    MOVS    R4, #0
-1:  MOVS    R0, R4            @ gpio_init(pin)
-    BL      gpio_init
-    MOVS    R0, R4            @ gpio_set_dir(pin, 1)
-    MOVS    R1, #GPIO_OUT
-    BL      link_gpio_set_dir
-    ADDS    R4, R4, #1
-    CMP     R4, #7
-    BCC     1b
+    MOVS    R4, #0		@ R4 = 0 (start with pin 0)
+1:  MOVS    R0, R4		@ R0 = pin number		            
+    BL      gpio_init	@ call gpio_init(pin)	
+    MOVS    R0, R4      @ R0 = pin number again
+    MOVS    R1, #GPIO_OUT 		@ R1 = output
+    BL      link_gpio_set_dir	@ set pin as output
+    ADDS    R4, R4, #1		@ R4 = R4 + 1 (next pin)		
+    CMP     R4, #7			@ compare R4 with 7
+    BCC     1b				@ if R4 < 7, go back to "1"
 
     /* start: count (R6) = 0, dir (R5)=upp(0) */
     MOVS    R6, #0
