@@ -1,18 +1,15 @@
 	.syntax unified
 	.cpu cortex-m0plus
 	.thumb
-
 	.global main
 	.thumb_func
 
 @functions
 	.extern gpio_init
 	.extern sleep_ms 
-	.extern link_gpio_set_dir @set pin direction
-	.extern link_gpio_put  @ write value to pin
-
+	.extern link_gpio_set_dir 		@set pin direction
+	.extern link_gpio_put  			@ write value to pin
 	.equ GPIO_OUT, 1          @ output = 1
-
 	.text
 main:
     MOVS    R4, #0		@ R4 = 0 (start with pin 0)
@@ -25,71 +22,65 @@ main:
     CMP     R4, #7			@ compare R4 with 7
     BCC     1b				@ if R4 < 7, go back to "1"
 
-    /* start: count (R6) = 0, dir (R5)=upp(0) */
-    MOVS    R6, #0
-    MOVS    R5, #0
+   
+    MOVS    R6, #0		 @ start counting from 0
+    MOVS    R5, #0		 @ start by counting UP (later changes to 1 to go DOWN)
 
 loop_main:
-    /* Hämta bitmönster (CC: A..G = bit0..bit6, 1=tänd) i R4 (callee-saved) */
-    LDR     R0, =digits
-    ADDS    R0, R0, R6
-    LDRB    R4, [R0]          @ R4 = pattern
+    
+    LDR     R0, =digits		@ load address of digits table (the list of 0–9 bit patterns)
+    ADDS    R0, R0, R6		@ choose which number (index) to show
+    LDRB    R4, [R0]		@ get which LEDs to turn on for this number		          
 
-    /* Skriv ut GP0..GP6.
-       - R4 håller pattern och skiftas höger ett steg efter varje segment.
-       - R7 = pin-index (callee-saved).
-       - R3 används bara temporärt som mask=1 (caller-saved, ok om den ändras). */
-    MOVS    R7, #0            @ pin = 0
-2:  MOVS    R1, R4            @ R1 = pattern
+    MOVS    R7, #0            @ R7 = pin index = 0
+2:  MOVS    R1, R4            @ copy pattern
     MOVS    R3, #1            @ mask = 1 (Thumb-1 kräver reg-reg AND)
     ANDS    R1, R3            @ R1 = (pattern & 1)
-    MOVS    R0, R7            @ R0 = pin
+    MOVS    R0, R7            @ R0 = current pin
     BL      link_gpio_put     @ C-kall får ändra R0-R3, men ej R4/R7
     LSRS    R4, R4, #1        @ pattern >>= 1 (i R4 som bevaras av C)
-    ADDS    R7, R7, #1
-    CMP     R7, #7
-    BCC     2b
+    
+	ADDS    R7, R7, #1		  @ next pin
+    CMP     R7, #7		      @ compare with 7
+    BCC     2b				  @ if < 7, loop again
 
-    /* 1 s delay enligt uppgift */
-    LDR     R0, =1000
-    BL      sleep_ms
+    LDR     R0, =1000 		@ R0 = 1000 (delay time)
+    BL      sleep_ms		 @ wait 1000 ms
 
-    /* Upp/Ned: 0→9→0 */
-    CMP     R5, #0
-    BNE     dir_down
+    CMP     R5, #0		@ check direction
+    BNE     dir_down	@ if dir=1, go down
 
-    /* --- UPP --- */
-    CMP     R6, #9
-    BNE     inc_ok
-    MOVS    R5, #1            @ vänd till nedåt
-    SUBS    R6, R6, #1        @ nästa 8
+   
+    CMP     R6, #9		 @ if digit = 9
+    BNE     inc_ok		@ if R6 is not 9 yet, add 1
+    MOVS    R5, #1            @  change direction to down
+    SUBS    R6, R6, #1        @ gp down 
     B       loop_main
 inc_ok:
-    ADDS    R6, R6, #1
+    ADDS    R6, R6, #1		@ digit = digit + 1
     B       loop_main
 
-dir_down:
-    /* --- NED --- */
-    CMP     R6, #0
-    BNE     dec_ok
-    MOVS    R5, #0            @ vänd till uppåt
-    ADDS    R6, R6, #1        @ nästa 1
+@ same as there up but this time to see if its 0 so it count up 
+    CMP     R6, #0		
+    BNE     dec_ok		
+    MOVS    R5, #0            
+    ADDS    R6, R6, #1        
     B       loop_main
 dec_ok:
-    SUBS    R6, R6, #1
+    SUBS    R6, R6, #1		@ digit = digit - 1
     B       loop_main
 
-	/* -------- DATA -------- */
+
 	.data
 	.align 1
 digits:
-    .byte 0x3F    @ 0
-    .byte 0x06    @ 1
-    .byte 0x5B    @ 2
-    .byte 0x4F    @ 3
-    .byte 0x66    @ 4
-    .byte 0x6D    @ 5
-    .byte 0x7D    @ 6
-    .byte 0x07    @ 7
-    .byte 0x7F    @ 8
-    .byte 0x6F    @ 9
+    .byte 0x3F    @digit  0
+    .byte 0x06    @ digit 1
+    .byte 0x5B    @ digit 2
+    .byte 0x4F    @ digit 3
+    .byte 0x66    @ digit 4
+    .byte 0x6D    @ digit 5
+    .byte 0x7D    @ digit 6
+    .byte 0x07    @ digit 7
+    .byte 0x7F    @digit  8
+    .byte 0x6F    @digit  9
