@@ -4,10 +4,15 @@
 	.EQU	GPIO_OUT, 1      @ anger att pinnen ska vara utgång
 	.EQU	sleep_time, 1000  @ 1000 ms (1 sekund)
 
-.EQU betyder att vi definierar en konstant (ungefär som #define i C).
-
+EQU betyder att vi definierar en konstant (ungefär som #define i C).
 Vi säger att våra tre LEDs sitter på GPIO 0, 1 och 2.
-
 GPIO_OUT = 1 betyder att pinnen ska fungera som utgång (output).
-
 sleep_time = 1000 används för att vänta 1 sekund mellan varje steg i mönstret.
+
+
+.thumb_func
+.global main
+
+.thumb_func anger att funktionen använder Thumb-instruktionssetet, vilket krävs av Pico SDK.
+.global main gör att funktionen main blir synlig för C-program eller SDK — det här är alltså vårt startställe.
+
