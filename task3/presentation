@@ -10,11 +10,11 @@ GPIO_OUT = 1 betyder att pinnen ska fungera som utgång (output).
 sleep_time = 1000 används för att vänta 1 sekund mellan varje steg i mönstret.
 
 
-.thumb_func
-.global main
+	.thumb_func
+	.global main
 
-.thumb_func anger att funktionen använder Thumb-instruktionssetet, vilket krävs av Pico SDK.
-.global main gör att funktionen main blir synlig för C-program eller SDK — det här är alltså vårt startställe.
+thumb_func anger att funktionen använder Thumb-instruktionssetet, vilket krävs av Pico SDK.
+global main gör att funktionen main blir synlig för C-program eller SDK — det här är alltså vårt startställe.
 
 
 	MOV	R0, #LED_PIN1
@@ -22,11 +22,30 @@ sleep_time = 1000 används för att vänta 1 sekund mellan varje steg i mönstre
 	MOV	R0, #LED_PIN1	
 	MOV	R1, #GPIO_OUT	
 	BL	link_gpio_set_dir
-För varje LED gör vi samma sak:
 
 Laddar pinnens nummer i register R0
 Anropar gpio_init (en C-funktion i Pico SDK) för att aktivera pinnen
 Sätter pinnen som utgång med link_gpio_set_dir
 Samma kod upprepas för LED_PIN2 och LED_PIN3.
+
+
+	MOV R7, #0   @ counter = 0
+	MOV R6, #0   @ direction = 0 (0 = uppåt, 1 = nedåt)
+
+R7 används som räknare som representerar vilket mönster av lysdioder som är på.
+Varje bit i R7 motsvarar en LED:
+bit 0 → LED1
+bit 1 → LED2
+bit 2 → LED3
+
+R6 håller riktningen:
+0 = vi räknar upp (ljuset går åt höger)
+1 = vi räknar ner (ljuset går åt vänster)
+
+
+loop:
+	MOV R3, #7 
+	AND R7, R7, R3  @ begränsar R7 till 3 bitar (0–7)
+
 
 
