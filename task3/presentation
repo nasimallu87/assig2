@@ -47,5 +47,94 @@ loop:
 	MOV R3, #7 
 	AND R7, R7, R3  @ begränsar R7 till 3 bitar (0–7)
 
+Syftet är att begränsa räknarens värde till endast tre bitar (0–7), eftersom varje bit motsvarar en av de tre lysdioderna.
+Talet 7 motsvarar 111 i binär form, vilket fungerar som en mask.
+När man gör en AND-operation mellan R7 och 7, behålls bara de tre lägsta bitarna i R7, och alla andra bitar sätts till 0.
+Detta förhindrar att räknaren går utanför området 0–7 och håller LED-mönstret stabilt.
+
+
+	MOV R2, R7
+	MOV R3, #1
+	AND R2, R2, R3
+	MOV R1, R2
+	MOV R0, #LED_PIN1
+	BL link_gpio_put
+
+Den här koden kontrollerar LED1.
+Först kopieras värdet i R7 till R2.
+Sen laddas siffran 1 i R3 — det betyder att vi bara vill kolla på den sista biten.
+Med AND-instruktionen jämför vi R2 och R3, så att bara den sista biten i R7 blir kvar — alltså 0 eller 1.
+Resultatet flyttas till R1, och vi lägger in LED1:s pin, alltså GPIO 0, i R0.
+Till slut anropas funktionen link_gpio_put, som tänder LED1 om värdet är 1, eller släcker den om värdet är 0.
+
+
+	MOV R2, R7
+	LSR R2, R2, #1   @ skifta höger 1 steg (bit1 -> LSB)
+	MOV R3, #1
+	AND R2, R2, R3
+	MOV R1, R2
+	MOV R0, #LED_PIN2
+	BL link_gpio_put
+
+Den här koden fungerar på samma sätt som LED1, men skillnaden är att vi först använder LSR för att flytta bit 1 till den sista positionen.
+Till exempel: om R7 = 010 (där bara LED2 ska tändas), så flyttas det till 001 med LSR.
+
+
+	MOV R2, R7
+	LSR R2, R2, #2   @ skifta 2 steg
+	MOV R3, #1
+	AND R2, R2, R3
+	MOV R1, R2
+	MOV R0, #LED_PIN3
+	BL link_gpio_put
+
+LED3-koden fungerar på samma sätt som LED1 och LED2, men skillnaden är att vi flyttar bit 2 två steg åt höger med LSR.
+Till exempel: om R7 = 100 (där bara LED3 ska tändas), så blir det 001.
+
+
+	LDR R0, =sleep_time
+	BL sleep_ms 
+
+Väntar 1000 ms (1 sekund) mellan varje steg.
+
+
+	CMP R6, #0
+	BNE down
+
+Om R6 ≠ 0 betyder det att vi ska räkna nedåt.
+Annars hoppar vi till sektionen up.
+
+
+up:
+	CMP R7, #7
+	BNE up_notmax
+	MOV R6, #1
+	SUB R7, R7, #1 
+	B down
+
+Om R7 = 7 (alla 3 LEDs tända) → vänd riktning (R6=1) och börja gå nedåt.
+Annars öka räknaren (r7) med 1:
+
+up_notmax:
+    ADD R7, R7, #1
+    B loop
+
+Om vi är i uppåt-riktning och R7 inte är 7 (alla LEDs tända) → öka R7 med 1.
+Sedan går den tillbaka till loop för att uppdatera LEDs.
+
+
+down:
+	CMP R7, #0
+	BNE down_notmin
+	MOV R6, #0
+	ADD R7, R7, #1
+	B loop
+
+down_notmin:
+	SUB R7, R7, #1
+	B loop
+
+detta är samma sak som över 
+
 
 
