@@ -16,3 +16,17 @@ sleep_time = 1000 används för att vänta 1 sekund mellan varje steg i mönstre
 .thumb_func anger att funktionen använder Thumb-instruktionssetet, vilket krävs av Pico SDK.
 .global main gör att funktionen main blir synlig för C-program eller SDK — det här är alltså vårt startställe.
 
+
+	MOV	R0, #LED_PIN1
+	BL	gpio_init
+	MOV	R0, #LED_PIN1	
+	MOV	R1, #GPIO_OUT	
+	BL	link_gpio_set_dir
+För varje LED gör vi samma sak:
+
+Laddar pinnens nummer i register R0
+Anropar gpio_init (en C-funktion i Pico SDK) för att aktivera pinnen
+Sätter pinnen som utgång med link_gpio_set_dir
+Samma kod upprepas för LED_PIN2 och LED_PIN3.
+
+
